@@ -34,7 +34,7 @@ statement = '''
         'REF' TEXT NOT NULL,
         'ReviewDate' TEXT NOT NULL,
         'CocoaPercent' REAL NOT NULL,
-        'CompanyLocationId' INTEGER NOT NULL,
+        'CompanyLocationId' INTEGER,
         'Rating' REAL NOT NULL,
         'BeanType' TEXT,
         'BroadBeanOriginId' INTEGER
@@ -63,8 +63,8 @@ with open('flavors_of_cacao_cleaned.csv') as f:
     csvReader = csv.reader(f)
     next(csvReader)
     for row in csvReader:
-        statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocationId, Rating, BeanType, BroadBeanOriginId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
+        statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[6], row[7]))
     f.close()
 conn.commit()
 
