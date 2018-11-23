@@ -12,6 +12,54 @@ DBNAME = 'choc.db'
 BARSCSV = 'flavors_of_cacao_cleaned.csv'
 COUNTRIESJSON = 'countries.json'
 
+conn = sqlite3.connect(DBNAME)
+cur = conn.cursor()
+
+
+statement = '''
+    DROP TABLE IF EXISTS 'Bars';
+'''
+cur.execute(statement)
+
+statement = '''
+    DROP TABLE IF EXISTS 'Countries';
+'''
+cur.execute(statement)
+
+
+#Creating the table "Bars"
+statement = '''
+    CREATE TABLE 'Bars' (
+        'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
+        'Company' TEXT NOT NULL,
+        'SpecificBeanBarName' TEXT NOT NULL,
+        'REF' TEXT NOT NULL,
+        'ReviewDate' TEXT NOT NULL,
+        'CocoaPercent' REAL NOT NULL,
+        'CompanyLocationId' INTEGER NOT NULL,
+        'Rating' REAL NOT NULL,
+        'BeanType' TEXT,
+        'BroadBeanOriginId' INTEGER NOT NULL
+    );
+'''
+cur.execute(statement)
+conn.commit()
+
+#Creating the table "Countries"
+statement = '''
+    CREATE TABLE 'Countries' (
+            'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
+            'Alpha2' TEXT NOT NULL,
+            'Alpha3' TEXT NOT NULL,
+            'EnglishName' TEXT NOT NULL,
+            'Region' TEXT NOT NULL,
+            'Subregion' TEXT NOT NULL,
+            'Population' INTEGER NOT NULL,
+            'Area' REAL
+    );
+'''
+cur.execute(statement)
+conn.commit()
 
 # Part 2: Implement logic to process user commands
 def process_command(command):
