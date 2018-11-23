@@ -15,7 +15,6 @@ COUNTRIESJSON = 'countries.json'
 conn = sqlite3.connect(DBNAME)
 cur = conn.cursor()
 
-
 statement = '''
     DROP TABLE IF EXISTS 'Bars';
 '''
@@ -25,7 +24,6 @@ statement = '''
     DROP TABLE IF EXISTS 'Countries';
 '''
 cur.execute(statement)
-
 
 #Creating the table "Bars"
 statement = '''
@@ -39,7 +37,7 @@ statement = '''
         'CompanyLocationId' INTEGER NOT NULL,
         'Rating' REAL NOT NULL,
         'BeanType' TEXT,
-        'BroadBeanOriginId' INTEGER NOT NULL
+        'BroadBeanOriginId' INTEGER
     );
 '''
 cur.execute(statement)
@@ -61,26 +59,53 @@ statement = '''
 cur.execute(statement)
 conn.commit()
 
-# Part 2: Implement logic to process user commands
-def process_command(command):
-    return []
+with open('flavors_of_cacao_cleaned.csv') as f:
+    csvReader = csv.reader(f)
+    next(csvReader)
+    for row in csvReader:
+        statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, CompanyLocationId, Rating, BeanType, BroadBeanOriginId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
+    f.close()
+conn.commit()
+
+with open('countries.json') as f:
+    data_list = json.load(f)
+    
+    for country in data_list:
+        country_name = (country['name'])
+        alpha2 = (country['alpha2Code'])
+        alpha3 = (country['alpha3Code'])
+        country_reg = (country['region'])
+        country_subreg = (country['subregion'])
+        country_pop = (country['population'])
+        country_area = (country['area'])
+        statement = "INSERT INTO \"Countries\" (Alpha2, Alpha3, EnglishName, Region, Subregion, Population, Area) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        cur.execute(statement, (alpha2, alpha3, country_name, country_reg, country_subreg, country_pop, country_area))
+    f.close()
+conn.commit()
+conn.close()
 
 
-def load_help_text():
-    with open('help.txt') as f:
-        return f.read()
-
-# Part 3: Implement interactive prompt. We've started for you!
-def interactive_prompt():
-    help_text = load_help_text()
-    response = ''
-    while response != 'exit':
-        response = input('Enter a command: ')
-
-        if response == 'help':
-            print(help_text)
-            continue
-
-# Make sure nothing runs or prints out when this file is run as a module
-if __name__=="__main__":
-    interactive_prompt()
+## Part 2: Implement logic to process user commands
+#def process_command(command):
+#    return []
+#
+#
+#def load_help_text():
+#    with open('help.txt') as f:
+#        return f.read()
+#
+## Part 3: Implement interactive prompt. We've started for you!
+#def interactive_prompt():
+#    help_text = load_help_text()
+#    response = ''
+#    while response != 'exit':
+#        response = input('Enter a command: ')
+#
+#        if response == 'help':
+#            print(help_text)
+#            continue
+#
+## Make sure nothing runs or prints out when this file is run as a module
+#if __name__=="__main__":
+#    interactive_prompt()
