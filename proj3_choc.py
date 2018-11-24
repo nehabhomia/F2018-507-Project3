@@ -59,15 +59,6 @@ statement = '''
 cur.execute(statement)
 conn.commit()
 
-with open('flavors_of_cacao_cleaned.csv') as f:
-    csvReader = csv.reader(f)
-    next(csvReader)
-    for row in csvReader:
-        statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType) VALUES (?, ?, ?, ?, ?, ?, ?)"
-        cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[6], row[7]))
-    f.close()
-conn.commit()
-
 with open('countries.json') as f:
     data_list = json.load(f)
     
@@ -83,6 +74,32 @@ with open('countries.json') as f:
         cur.execute(statement, (alpha2, alpha3, country_name, country_reg, country_subreg, country_pop, country_area))
     f.close()
 conn.commit()
+
+with open('flavors_of_cacao_cleaned.csv') as f:
+    csvReader = csv.reader(f)
+    next(csvReader)
+    for row in csvReader:
+        statement = "SELECT Id FROM Countries WHERE EnglishName = ?"
+        company_location = row[5]
+        cur.execute(statement, (company_location,))
+        company_location_id = cur.fetchone()
+        statement = "SELECT Id FROM Countries WHERE EnglishName = ?"
+        cur.execute(statement, (row[8],))
+        broadbean_origin_id = cur.fetchone()
+        
+        if company_location_id is not None and broadbean_origin_id is not None:
+            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType, CompanyLocationId, BroadBeanOriginId) VALUES (?, ?, ?, ?, ?, ?, ?,?,?)"
+            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[6], row[7],company_location_id[0],broadbean_origin_id[0]))
+        elif company_location_id is None and broadbean_origin_id is not None:
+            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType, BroadBeanOriginId) VALUES (?, ?, ?, ?, ?, ?,?,?)"
+            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[6], row[7], broadbean_origin_id[0]))
+        else:
+            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType, CompanyLocationId) VALUES (?, ?, ?, ?, ?, ?,?,?)"
+            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[6], row[7], company_location_id[0]))
+    
+    f.close()
+conn.commit()
+
 conn.close()
 
 
