@@ -342,16 +342,65 @@ def processRegions(parameters):
     This function will run if the user command is regions, and will process the
     parameters according to the given list to give desired result.
     '''
-    pass
+    possible_limit_by = ["top", "bottom"]
+    sort_by_elements = []
+    sort_by_select = []
+    limit_elements = []
+    join_on = "Bars.CompanyLocationId"
+    for param in parameters:
+        if "=" in param and param.split("=")[0] in possible_limit_by:
+            key = param.split("=")[0]
+            value = param.split("=")[1]
+            limit_elements.append([key, int(value)])
+        elif param == "ratings":
+            sort_by_select = "AVG(Rating) as Rating"
+            sort_by_elements.append("Rating")
+        elif param == "cocoa":
+            sort_by_select = "AVG(CocoaPercent) as CocoaPercent"
+            sort_by_elements.append("CocoaPercent")
+        elif param == "bars_sold":
+            sort_by_select = "Count(*) as bars_sold"
+            sort_by_elements.append("bars_sold")
+        elif param == "sellers":
+            join_on = "Bars.CompanyLocationId"
+        elif param == "sources":
+            join_on = "Bars.BroadBeanOriginId"
+        else:
+            print("Command not recognized")
+            return
 
-#    conn = sqlite3.connect(DBNAME)
-#    cur = conn.cursor()
-#    conn.commit()
-#    conn.close()
+    if not sort_by_elements:
+        sort_by_select = "AVG(Rating) as Rating"
+        sort_by_elements.append("Rating")
+    if not limit_elements:
+        limit_elements.append(["top", 10])
+
+    sort_by_clause_top = "ORDER BY " + sort_by_elements[0] + " DESC"
+    sort_by_clause_bottom = "ORDER BY " + sort_by_elements[0]
+    group_by_clause = "GROUP BY C1.Region"
+    statement = """SELECT C1.Region, %s
+                            FROM Bars
+                                JOIN Countries C1 ON C1.Id = %s
+                                %s
+                                HAVING count(*) > 4
+                                %s
+                                """
+    conn = sqlite3.connect('choc.db')
+    cur = conn.cursor()
+    limit_elements_clause = limit_elements[0]
+    if 'bottom' in limit_elements_clause:
+        cur.execute(statement % (sort_by_select, join_on, group_by_clause, sort_by_clause_bottom))
+    else:
+        cur.execute(statement % (sort_by_select, join_on, group_by_clause, sort_by_clause_top))
+    table = cur.fetchall()
+    result = table[:limit_elements_clause[1]]
+    return result
+
 
 def load_help_text():
     with open('help.txt') as f:
         return f.read()
+
 
 ## Part 3: Implement interactive prompt. We've started for you!
 #def interactive_prompt():
