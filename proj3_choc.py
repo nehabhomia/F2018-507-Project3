@@ -193,7 +193,14 @@ def processBars(parameters):
         cur.execute(statement % (where_clause, sort_by_clause_top))
     table = cur.fetchall()
     result = table[:limit_elements_clause[1]]
-    return result
+    final_result = []
+    for res in result:
+        if res[5] is None:
+            with_unknown = (res[0], res[1], res[2], res[3], str(int(res[4])) + '%', 'Unknown')
+        else:
+            with_unknown = (res[0], res[1], res[2], res[3], str(int(res[4])) + '%', res[5])
+        final_result.append(with_unknown)
+    return final_result
 
 
 def processCompanies(parameters):
