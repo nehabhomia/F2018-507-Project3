@@ -195,6 +195,7 @@ def processBars(parameters):
     result = table[:limit_elements_clause[1]]
     final_result = []
     for res in result:
+
         if res[5] is None:
             with_unknown = (res[0], res[1], res[2], res[3], str(int(res[4])) + '%', 'Unknown')
         else:
@@ -424,11 +425,17 @@ def interactive_prompt():
             continue
         results = process_command(response)
         if results:
+            pass
             for result in results:
-#                formatted_output = '{:<25}{:<12}{:<27}{:<5}{:<5}{:<25}'.format(*result)
-#                print (formatted_output)
-                print("    ".join(map(str, result)))
-    
+                if len(result) == 6:
+                    formatted_output = '{:<25}{:<12}{:<27}{:<5}{:<5}{:<25}'.format(*result)
+                    print (formatted_output)
+                elif len(result) == 3:
+                    formatted_output = '{:<30}{:<60}{:<25}'.format(*result)
+                    print(formatted_output)
+                else:
+                    formatted_output = '{:<25}{:<25}'.format(*result)
+                    print (formatted_output)   
     print('bye')
 
 # Make sure nothing runs or prints out when this file is run as a module
