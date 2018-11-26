@@ -227,7 +227,7 @@ def processCompanies(parameters):
             value = param.split("=")[1]
             limit_elements.append([key, int(value)])
         elif param == "ratings":
-            sort_by_select = "AVG(Rating) as Rating"
+            sort_by_select = "ROUND(AVG(Rating),1) as Rating"
             sort_by_elements.append("Rating")
         elif param == "cocoa":
             sort_by_select = "AVG(CocoaPercent) as CocoaPercent"
@@ -240,7 +240,7 @@ def processCompanies(parameters):
             return
 
     if not sort_by_elements:
-        sort_by_select = "AVG(Rating) as Rating"
+        sort_by_select = "ROUND(AVG(Rating),1) as Rating"
         sort_by_elements.append("Rating")
     if not limit_elements:
         limit_elements.append(["top", 10])
@@ -294,7 +294,7 @@ def processCountries(parameters):
             value = param.split("=")[1]
             limit_elements.append([key, int(value)])
         elif param == "ratings":
-            sort_by_select = "AVG(Rating) as Rating"
+            sort_by_select = "ROUND(AVG(Rating),1) as Rating"
             sort_by_elements.append("Rating")
         elif param == "cocoa":
             sort_by_select = "AVG(CocoaPercent) as CocoaPercent"
@@ -312,7 +312,7 @@ def processCountries(parameters):
 
 
     if not sort_by_elements:
-        sort_by_select = "AVG(Rating) as Rating"
+        sort_by_select = "ROUND(AVG(Rating),1) as Rating"
         sort_by_elements.append("Rating")
     if not limit_elements:
         limit_elements.append(["top", 10])
@@ -361,7 +361,7 @@ def processRegions(parameters):
             value = param.split("=")[1]
             limit_elements.append([key, int(value)])
         elif param == "ratings":
-            sort_by_select = "AVG(Rating) as Rating"
+            sort_by_select = "ROUND(AVG(Rating),1) as Rating"
             sort_by_elements.append("Rating")
         elif param == "cocoa":
             sort_by_select = "AVG(CocoaPercent) as CocoaPercent"
@@ -378,7 +378,7 @@ def processRegions(parameters):
             return
 
     if not sort_by_elements:
-        sort_by_select = "AVG(Rating) as Rating"
+        sort_by_select = "ROUND(AVG(Rating),1) as Rating"
         sort_by_elements.append("Rating")
     if not limit_elements:
         limit_elements.append(["top", 10])
@@ -425,6 +425,8 @@ def interactive_prompt():
         results = process_command(response)
         if results:
             for result in results:
+#                formatted_output = '{:<25}{:<12}{:<27}{:<5}{:<5}{:<25}'.format(*result)
+#                print (formatted_output)
                 print("    ".join(map(str, result)))
     
     print('bye')
