@@ -177,8 +177,8 @@ def processBars(parameters):
 
     statement = """SELECT SpecificBeanBarName, Company, C1.EnglishName, Rating, CocoaPercent, C2.EnglishName
                 FROM Bars
-                JOIN Countries C1 ON C1.Id = Bars.CompanyLocationId
-                JOIN Countries C2 ON C2.Id = Bars.BroadBeanOriginId
+                LEFT JOIN Countries C1 ON C1.Id = Bars.CompanyLocationId
+                LEFT JOIN Countries C2 ON C2.Id = Bars.BroadBeanOriginId
                 %s
                 %s
                 """
@@ -198,7 +198,67 @@ def processCompanies(parameters):
     This function will run if the user command is companies, and will process the
     parameters according to the given list to give desired result.
     '''
-    pass
+    possible_where = ["country", "region"]
+    possible_limit_by = ["top", "bottom"]
+    where_clause_elements = []
+    sort_by_elements = []
+    sort_by_select = []
+    limit_elements = []
+    for param in parameters:
+        if "=" in param and param.split("=")[0] in possible_where:
+            key = param.split("=")[0]
+            value = param.split("=")[1]
+            if key == "country":
+                where_clause_elements.append("C1.Alpha2=" + "'" + value + "'")
+            if key == "region":
+                where_clause_elements.append("C1.Region=" + "'" + value + "'")
+        elif "=" in param and param.split("=")[0] in possible_limit_by:
+            key = param.split("=")[0]
+            value = param.split("=")[1]
+            limit_elements.append([key, int(value)])
+        elif param == "ratings":
+            sort_by_select = "AVG(Rating) as Rating"
+            sort_by_elements.append("Rating")
+        elif param == "cocoa":
+            sort_by_select = "AVG(CocoaPercent) as CocoaPercent"
+            sort_by_elements.append("CocoaPercent")
+        elif param == "bars_sold":
+            sort_by_select = "Count(*) as bars_sold"
+            sort_by_elements.append("bars_sold")
+        else:
+            print("Command not recognized")
+            return
+
+    if not sort_by_elements:
+        sort_by_select = "AVG(Rating) as Rating"
+        sort_by_elements.append("Rating")
+    if not limit_elements:
+        limit_elements.append(["top", 10])
+    if not where_clause_elements:
+        where_clause = ""
+    else:
+        where_clause = "WHERE " + 'and'.join(where_clause_elements)
+    sort_by_clause_top = "ORDER BY " + sort_by_elements[0] + " DESC"
+    sort_by_clause_bottom = "ORDER BY " + sort_by_elements[0]
+    group_by_clause = "GROUP BY Company"
+    statement = """SELECT Company, C1.EnglishName, %s
+                    FROM Bars
+                        JOIN Countries C1 ON C1.Id = Bars.CompanyLocationId
+                        %s
+                        %s
+                        HAVING count(*) > 4
+                        %s
+                        """
+    conn = sqlite3.connect('choc.db')
+    cur = conn.cursor()
+    limit_elements_clause = limit_elements[0]
+    if 'bottom' in limit_elements_clause:
+        cur.execute(statement % (sort_by_select,where_clause, group_by_clause, sort_by_clause_bottom))
+    else:
+        cur.execute(statement % (sort_by_select,where_clause, group_by_clause, sort_by_clause_top))
+    table = cur.fetchall()
+    result = table[:limit_elements_clause[1]]
+    return result
 
 def processCountries(parameters):
     '''
