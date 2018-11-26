@@ -59,7 +59,8 @@ statement = '''
 cur.execute(statement)
 conn.commit()
 
-with open('countries.json') as f:
+# populating the table countries
+with open(COUNTRIESJSON) as f:
     data_list = json.load(f)
     
     for country in data_list:
@@ -75,7 +76,8 @@ with open('countries.json') as f:
     f.close()
 conn.commit()
 
-with open('flavors_of_cacao_cleaned.csv') as f:
+#populating the table bars
+with open(BARSCSV) as f:
     csvReader = csv.reader(f)
     next(csvReader)
     for row in csvReader:
@@ -86,32 +88,141 @@ with open('flavors_of_cacao_cleaned.csv') as f:
         statement = "SELECT Id FROM Countries WHERE EnglishName = ?"
         cur.execute(statement, (row[8],))
         broadbean_origin_id = cur.fetchone()
-        
+# to populate the columns CompanyLocationId and BroadBeanOriginId from countries
+#table using EnglishName and to be able to handle there being Null values in either        
         if company_location_id is not None and broadbean_origin_id is not None:
-            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType, CompanyLocationId, BroadBeanOriginId) VALUES (?, ?, ?, ?, ?, ?, ?,?,?)"
-            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[6], row[7],company_location_id[0],broadbean_origin_id[0]))
+            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType, CompanyLocationId, BroadBeanOriginId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4].replace('%', ''), row[6], row[7],company_location_id[0],broadbean_origin_id[0]))
         elif company_location_id is None and broadbean_origin_id is not None:
-            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType, BroadBeanOriginId) VALUES (?, ?, ?, ?, ?, ?,?,?)"
-            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[6], row[7], broadbean_origin_id[0]))
+            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType, BroadBeanOriginId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4].replace('%', ''), row[6], row[7], broadbean_origin_id[0]))
+        elif company_location_id is not None and broadbean_origin_id is None:
+            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType, CompanyLocationId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4].replace('%', ''), row[6], row[7], company_location_id[0]))
         else:
-            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType, CompanyLocationId) VALUES (?, ?, ?, ?, ?, ?,?,?)"
-            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4], row[6], row[7], company_location_id[0]))
-    
+            statement = "INSERT INTO \"Bars\" (Company, SpecificBeanBarName, REF, ReviewDate, CocoaPercent, Rating, BeanType) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            cur.execute(statement, (row[0], row[1], row[2], row[3], row[4].replace('%', ''), row[6], row[7]))
     f.close()
 conn.commit()
 
 conn.close()
 
 
-## Part 2: Implement logic to process user commands
-#def process_command(command):
-#    return []
-#
-#
-#def load_help_text():
-#    with open('help.txt') as f:
-#        return f.read()
-#
+# Part 2: Implement logic to process user commands
+def process_command(command):
+    '''
+    This function will split the user input and based on whether the command is
+    bars, companies, countries or regions, it will run the appropriate function
+    to process the parameters and return a list of the appropriate result.
+    '''
+    command_parameters = command.split(" ")
+    split_command = command_parameters[0]
+    parameters = command_parameters[1:]
+    if split_command == "bars":
+        processBars(parameters)
+    elif split_command == "companies":
+        processCompanies(parameters)
+    elif split_command == "countries":
+        processCountries(parameters)
+    elif split_command == "regions":
+        processRegions(parameters)
+    else:
+        print("Command not recognized: ", command)
+    return []
+
+def processBars(parameters):
+    '''
+    This function will run if the user command is bars, and will process the
+    parameters according to the given list to give desired result.
+    '''
+    possible_where = ["sellcountry", "sourcecountry", "sellregion", "sourceregion"]
+    possible_limit_by = ["top", "bottom"]
+    where_clause_elements = []
+    sort_by_elements = []
+    limit_elements = []
+    for param in parameters:
+        if "=" in param and param.split("=")[0] in possible_where:
+            key = param.split("=")[0]
+            value = param.split("=")[1]
+            if key == "sellcountry":
+                where_clause_elements.append("C1.Alpha2=" + "'" + value + "'")
+            if key == "sourcecountry":
+                where_clause_elements.append("C2.Alpha2=" + "'" + value + "'")
+            if key == "sellregion":
+                where_clause_elements.append("C1.Region=" + "'" + value + "'")
+            if key == "sourceregion":
+                where_clause_elements.append("C2.Region=" + "'" + value + "'")
+        elif "=" in param and param.split("=")[0] in possible_limit_by:
+            key = param.split("=")[0]
+            value = param.split("=")[1]
+            limit_elements.append([key, int(value)])
+        elif param == "ratings":
+            sort_by_elements.append("Rating")
+        elif param == "cocoa":
+            sort_by_elements.append("CocoaPercent")
+        else:
+            print("Command not recognized")
+            return
+    if not sort_by_elements:
+        sort_by_elements.append("Rating")
+    if not limit_elements:
+        limit_elements.append(["top", 10])
+    if not where_clause_elements:
+        where_clause = ""
+    else:
+        where_clause = "WHERE " + 'and'.join(where_clause_elements)
+
+    sort_by_clause_top = "ORDER BY " + sort_by_elements[0] + " DESC"
+    sort_by_clause_bottom = "ORDER BY " + sort_by_elements[0]
+
+    statement = """SELECT SpecificBeanBarName, Company, C1.EnglishName, Rating, CocoaPercent, C2.EnglishName
+                FROM Bars
+                JOIN Countries C1 ON C1.Id = Bars.CompanyLocationId
+                JOIN Countries C2 ON C2.Id = Bars.BroadBeanOriginId
+                %s
+                %s
+                """
+    conn = sqlite3.connect('choc.db')
+    cur = conn.cursor()
+    limit_elements_clause = limit_elements[0]
+    if 'bottom' in limit_elements_clause:
+        cur.execute(statement % (where_clause, sort_by_clause_bottom))
+    else:
+        cur.execute(statement % (where_clause, sort_by_clause_top))
+    table = cur.fetchall()
+    result = table[:limit_elements_clause[1]]
+    return result
+
+def processCompanies(parameters):
+    '''
+    This function will run if the user command is companies, and will process the
+    parameters according to the given list to give desired result.
+    '''
+    pass
+
+def processCountries(parameters):
+    '''
+    This function will run if the user command is countries, and will process the
+    parameters according to the given list to give desired result.
+    '''
+    pass
+
+def processRegions(parameters):
+    '''
+    This function will run if the user command is regions, and will process the
+    parameters according to the given list to give desired result.
+    '''
+    pass
+
+#    conn = sqlite3.connect(DBNAME)
+#    cur = conn.cursor()
+#    conn.commit()
+#    conn.close()
+
+def load_help_text():
+    with open('help.txt') as f:
+        return f.read()
+
 ## Part 3: Implement interactive prompt. We've started for you!
 #def interactive_prompt():
 #    help_text = load_help_text()
