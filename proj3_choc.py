@@ -128,6 +128,7 @@ def process_command(command):
         result_list = processRegions(parameters)
     else:
         print("Command not recognized: ", command)
+        return
     return result_list #if it goes into else block, there is no result_list, so will that cause an error?
 
 
@@ -402,17 +403,25 @@ def load_help_text():
         return f.read()
 
 
-## Part 3: Implement interactive prompt. We've started for you!
-#def interactive_prompt():
-#    help_text = load_help_text()
-#    response = ''
-#    while response != 'exit':
-#        response = input('Enter a command: ')
-#
-#        if response == 'help':
-#            print(help_text)
-#            continue
-#
-## Make sure nothing runs or prints out when this file is run as a module
-#if __name__=="__main__":
-#    interactive_prompt()
+# Part 3: Implement interactive prompt. We've started for you!
+def interactive_prompt():
+    help_text = load_help_text()
+    response = ''
+    while response != 'exit':
+        response = input('Enter a command: ')
+
+        if response == 'help':
+            print(help_text)
+            continue
+        if response == 'exit':
+            continue
+        results = process_command(response)
+        if results:
+            for result in results:
+                print("    ".join(map(str, result)))
+    
+    print('bye')
+
+# Make sure nothing runs or prints out when this file is run as a module
+if __name__=="__main__":
+    interactive_prompt()
